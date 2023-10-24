@@ -36,7 +36,7 @@ for c_i, c in enumerate(credenciais):
           token = get_token(dados)
           return get_artist(id_artista, token)
 
-      out = {'id_artista' : id_artista,
+      out = {
         'followers': resposta['followers']['total'],
         'genres' : resposta['genres'],
         'popularity' : resposta['popularity']}
@@ -53,27 +53,30 @@ for c_i, c in enumerate(credenciais):
     tempo_req = 1
     lista = list(ids_artistas.keys())
 
-    with open('artists_dumps.txt', 'r') as file:
-      file_contents = file.read()
-  
+    file_contents = json.load(open("info_artistas.txt"))
+    
     control = 0
     count = 0 
-    dumps = []
+    dumps = {}
     for id_artista in lista:
       control = control + 1
       if id_artista not in file_contents:
+        dado = {}
         r, token, out = get_artist(id_artista, token)
         if r == None and token == None and out == None:
           rate_flag = False
           flag = True
           break
-        dumps.append(out)
+        dado[id_artista] = out
+        dumps.update(dado)
         time.sleep(tempo_req)
         count = count + 1
+        print(count, end='\r',flush=True)
 
-      if count == save:
+      if count == save or id_artista == lista[-1]: #coletou 500 ou coletou o ultimo
+        file_contents.update(dumps)
         count = 0
         print(control,"/",len(lista))
         print("Coletados ", save," salvando. Ultimo ID COLETADO: ",id_artista )
-        with open('artists_dumps.txt', 'a') as file:
-            file.write(json.dumps(dumps))
+        with open('info_artistas.txt', 'w') as file:
+            file.write(json.dumps(file_contents))
